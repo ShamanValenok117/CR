@@ -3,16 +3,16 @@ This repo "wine quality classification" is a project to explore, explain and com
 
 ## Key features from ordinary analyses
 Wine is splitted into three groups with unbalanced sample count: 
-	- class 0: low quality wines 250 samples
-	- class 1: medium quality wines 4250 samples
-	- class 2: high quality wines 5 samples
+- class 0: low quality wines 250 samples
+- class 1: medium quality wines 4250 samples
+- class 2: high quality wines 5 samples
 
 
 ## Used strategy
 Three approaches to increase samples in class 2 (high quality wines) were used :
-	- increase class 2 weights
-	- generate new samples by making mean of two samples from class 2
-	- generate new samples from class 1 + unique feature values (special for class 2)
+- increase class 2 weights
+- generate new samples by making mean of two samples from class 2
+- generate new samples from class 1 + unique feature values (special for class 2)
 
 ## Project Scope
 1. Explore features ( folder notebooks/explore )
