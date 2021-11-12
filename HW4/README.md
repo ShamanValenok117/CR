@@ -56,6 +56,9 @@ Three approaches to increase samples in class 2 (high quality wines) were used :
 - Stacking Classifier
 - Light GBM
 ---
+- All ML algoritms were optimised ( RandomSearchCV )
+- All ML algoritms were compared ( please check folder ./models/comparison/)
+---
 - Dense + Dense
 - SimpleRNN + Dense + Dense
 - LSTM + Dense + Dense
@@ -64,7 +67,8 @@ Three approaches to increase samples in class 2 (high quality wines) were used :
 - LSTM + Conv1D + Dense + Dense
 - LSTM + Conv1D + Conv1D + Dense + Dense
 - 2directional LSTM + Conv1D + Conv1D + Dense + Dense
-
+---
+- All NN algoritms were compared ( please check folder ./models/comparison/)
 ## URL:	
 [1] : link to Kaggle dataset https://www.kaggle.com/rajyellow46/wine-quality  
 [2] : link to git https://github.com/ShamanValenok117/CR/tree/master/HW4
