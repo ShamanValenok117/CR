@@ -1,0 +1,238 @@
+#!/usr/bin/env python
+# coding: utf-8
+
+# # Feature_generation
+# 
+# ### Loading required libraries 
+
+# In[1]:
+
+
+# matrices
+import numpy as np
+import pandas as pd
+
+# Visualisation
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import matplotlib.pylab as pylab
+import seaborn as sns
+
+#sklearn
+from sklearn.model_selection import train_test_split
+from sklearn.ensemble import RandomForestClassifier
+
+#scipy
+from scipy import stats
+
+# Configure visualisations
+get_ipython().run_line_magic('matplotlib', 'inline')
+mpl.style.use( 'ggplot' )
+sns.set_style( 'white' )
+pylab.rcParams[ 'figure.figsize' ] = 7 , 5
+
+# Ignore warnings
+import warnings
+warnings.filterwarnings('ignore')
+
+
+# #### Loading prepared dataset
+
+# In[2]:
+
+
+X = pd.read_csv('../../intermid/X_wo_missed_values.csv',index_col=0)
+y = pd.read_csv('../../intermid/y_wo_missed_values.csv',index_col=0)
+
+
+# ### Feature generation. 
+# 
+
+# In[3]:
+
+
+df = pd.concat([X,y],axis=1)
+
+
+# #### Making high quality wine features from medium quality wine
+
+# In[4]:
+
+
+features_for_high_quality = [
+    'chlorides',
+    'density',
+    'pH',
+    'alcohol',
+    'fixed acidity',
+    'volatile acidity',
+    'sulphates'
+]
+
+
+# In[5]:
+
+
+# lets check the statistical relevance :
+features_for_high_quality_statistic = {'feature':[],
+                                      'criteria_student_1samp':[],
+                                      'p_value':[]}
+
+for i in features_for_high_quality:
+    high_array = np.array(df.loc[df.quality==2,:][i]) # 2 = quality 'high'
+    medium_array = np.array(df.loc[df.quality==1,:][i]) # 1 = quality 'medium'
+    
+    criteria_studdent_1samp = stats.ttest_1samp(a=high_array,popmean=np.mean(medium_array) )
+    
+    features_for_high_quality_statistic['feature'].append(i)
+    features_for_high_quality_statistic['criteria_student_1samp'].append(round(criteria_studdent_1samp[0],3))
+    features_for_high_quality_statistic['p_value'].append(round(criteria_studdent_1samp[1],5))
+
+pd.DataFrame(features_for_high_quality_statistic)
+
+
+# The features: __chlorides__ and __alcohol__ is statistical significant.
+
+# ##### Preparing function
+# 
+# Make samples from medium wine with changing chlorides and alcohol features to correspond high_quality wines
+
+# In[6]:
+
+
+def make_new_sample_from_medium(n,dataset):
+    '''
+        MAKE NEW SAMPLE FROM MEDIUM QUALITY WINES ADDING chlorides AND alcohol
+        N - new samples amount
+    '''
+
+    high_chlorides = np.array(dataset.loc[dataset.quality==2,'chlorides'])
+    high_alcohol = np.array(dataset.loc[dataset.quality==2,'alcohol'])
+
+    new_item_chlorides = stats.norm.rvs(loc=np.mean(high_chlorides), scale=np.std(high_chlorides),size=n)
+    new_item_alcohol = stats.norm.rvs(loc=np.mean(high_alcohol), scale=np.std(high_alcohol),size=n)
+
+    medium_quality_wines = dataset[dataset.quality==1]
+
+    new_item = np.random.choice(medium_quality_wines.index,size=n)
+
+    new_item = medium_quality_wines.loc[new_item,:]
+
+    new_item.chlorides = new_item_chlorides
+    new_item.alcohol = new_item_alcohol
+    new_item.quality = [2]*n
+    
+    dataset = dataset.append(new_item)
+    
+    return new_item
+
+
+# In[7]:
+
+
+new_high_quality_samples = make_new_sample_from_medium(3000,df)
+
+
+# In[8]:
+
+
+index_high_quality = df[df.quality==2].index
+
+
+# In[9]:
+
+
+X_train, X_test, y_train, y_test = train_test_split(df.drop(index=index_high_quality).iloc[:,:-1],
+                                                    df.drop(index=index_high_quality).iloc[:,-1],test_size=.4,random_state=255)
+
+#adding high quality wines
+X_test = X_test.append(df.iloc[index_high_quality,:-1])
+y_test = y_test.append(df.iloc[index_high_quality,-1])
+
+X_test, X_val, y_test, y_val = train_test_split(X_test,y_test,test_size=.4,random_state=255)
+
+np.bincount(y_train), np.bincount(y_test),np.bincount(y_val)
+
+
+# In[10]:
+
+
+#adding generated examples to train dataset 
+X_train = X_train.append(new_high_quality_samples.iloc[:,:-1])
+y_train = y_train.append(new_high_quality_samples.iloc[:,-1])
+
+
+# In[11]:
+
+
+np.bincount(y_train), np.bincount(y_test),np.bincount(y_val)
+
+
+# In[12]:
+
+
+#making 100 duplicates of high_quality wine to X_test and y_test:
+X_y_test = pd.concat([X_test,y_test],axis=1)
+
+a = X_y_test[X_y_test.quality==2]
+
+a = a.sample(n=47,random_state=255,replace=True)
+
+X_y_test = pd.concat([a,X_y_test],axis=0)
+
+
+X_test = X_y_test.iloc[:,:-1]
+y_test = X_y_test.iloc[:,-1]
+
+np.bincount(y_test)
+
+
+# In[13]:
+
+
+#making 100 duplicates of high_quality wine to X_val and y_val:
+X_y_val = pd.concat([X_val,y_val],axis=1)
+
+a = X_y_val[X_y_val.quality==2]
+
+a = a.sample(n=48,random_state=255,replace=True)
+
+X_y_val = pd.concat([a,X_y_val],axis=0)
+
+
+X_val = X_y_val.iloc[:,:-1]
+y_val = X_y_val.iloc[:,-1]
+
+np.bincount(y_val)
+
+
+# In[14]:
+
+
+print('class:')
+print('0\t1\t2')
+print('-'*35)
+print(np.bincount(y_train), ' <- train')
+print(np.bincount(y_test), ' <- test')
+print(np.bincount(y_val), ' <- validation')
+
+
+# In[15]:
+
+
+np.bincount(y_train), np.bincount(y_test),np.bincount(y_val)
+
+
+# In[16]:
+
+
+#saving to file:
+X_train.to_csv('X_train.csv')
+y_train.to_csv('y_train.csv')
+
+X_test.to_csv('X_test.csv')
+y_test.to_csv('y_test.csv')
+
+X_val.to_csv('X_val.csv')
+y_val.to_csv('y_val.csv')
+

@@ -1,0 +1,24 @@
+# ipython code
+
+import os
+
+arrival = os.environ['DATABASE']
+destination = os.environ['USERPROFILE']
+
+arrival+='\\kaggle.json'
+destination+='\\.kaggle'
+
+get_ipython().system('mkdir {destination}')
+
+get_ipython().system('cp {arrival} {destination}')
+
+get_ipython().system("chmod 600 {destination+'\\\\kaggle.json'}")
+
+get_ipython().system('kaggle datasets download rajyellow46/wine-quality')
+
+get_ipython().system('unzip *.zip')
+
+get_ipython().system('rm -r {destination}')
+
+get_ipython().system('rm *.zip')
+

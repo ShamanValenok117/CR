@@ -1,0 +1,103 @@
+#ipython
+
+import numpy as np
+import pandas as pd
+
+import os
+if [True for i in os.listdir('../external/') if '.csv' in i] is None: 
+    get_ipython().run_line_magic('run', 'data.external.RUNME')
+print('Loading dataset to notebook')
+
+
+get_ipython().run_line_magic('run', '../external/RUNME')
+get_ipython().run_line_magic('run', '../external/load_data.ipy')
+get_ipython().system('mv winequalityN.csv ../external/')
+
+
+try:
+    df = pd.read_csv('../external/winequalityN.csv')
+except: 
+    get_ipython().run_line_magic('run', '../external/RUNME')
+    get_ipython().run_line_magic('run', '../external/load_data.ipy')
+    get_ipython().system('mv winequalityN.csv ../external/')
+    df = pd.read_csv('../external/winequalityN.csv')
+
+
+from sklearn.preprocessing import StandardScaler
+scaler = StandardScaler()
+
+
+
+new_df = pd.DataFrame(data = scaler.fit_transform(df.iloc[:,1:-1]),columns=df.iloc[:,1:-1].columns)
+
+
+new_df['quality'] = df.quality
+
+
+new_df['type_white'] = df.type.apply(lambda x: 1 if x == 'white' else 0)
+
+
+df = new_df
+
+
+df_without_NA = pd.DataFrame()
+
+# Fill missing 'fixed acidity' by mean same quality and wine type
+df_without_NA['fixed acidity'] = df['fixed acidity'].fillna( 
+                df.groupby(by=['quality','type_white'])['fixed acidity'].transform('mean') )
+
+# Fill missing 'volatile acidity' by median same quality and wine type
+df_without_NA['volatile acidity'] = df['volatile acidity'].fillna( 
+                df.groupby(by=['quality','type_white'])['volatile acidity'].transform('median') )
+
+
+# Fill missing 'citric acid' by median same quality and wine type
+df_without_NA['citric acid'] = df['citric acid'].fillna( 
+                df.groupby(by=['quality','type_white'])['citric acid'].transform('median') )
+
+# Fill missing 'residual sugar' by mean same quality and wine type
+df_without_NA['residual sugar'] = df['residual sugar'].fillna( 
+                df.groupby(by=['quality','type_white'])['residual sugar'].transform('mean') )
+
+
+# Fill missing 'chlorides' by mean same quality and wine type
+df_without_NA['chlorides'] = df['chlorides'].fillna( 
+                df.groupby(by=['quality','type_white'])['chlorides'].transform('mean') )
+
+
+# Fill missing 'pH' by mean same quality and wine type
+df_without_NA['pH'] = df['pH'].fillna( 
+                df.groupby(by=['quality','type_white'])['pH'].transform('mean') )
+
+
+# Fill missing 'sulphates' by mean same quality and wine type
+df_without_NA['sulphates'] = df['sulphates'].fillna( 
+                df.groupby(by=['quality','type_white'])['sulphates'].transform('mean') )
+
+# make the other_acids
+df_without_NA['other_acids'] = df_without_NA.apply(lambda x: x['fixed acidity'] - x['citric acid'],axis=1 )
+
+
+#columns in original dataset (df) where is no missed data
+
+features_wo_missed_values = [
+    'free sulfur dioxide',
+    'total sulfur dioxide',
+    'density',
+    'alcohol']
+
+
+#preparing features
+X = pd.concat( [df_without_NA,df[features_wo_missed_values] ],axis=1 )
+
+#preparing target
+a = {i:0 if i < 5 else 1 if i<9 else 2  for i in range(1,10) }
+df['quality'] = df.quality.map(a)
+df.quality.astype(int)
+y = df['quality']
+
+
+X.to_csv('X_wo_missed_values.csv')
+
+y.to_csv('y_wo_missed_values.csv')
+
