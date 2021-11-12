@@ -66,7 +66,7 @@ Three approaches to increase samples in class 2 (high quality wines) were used :
 - 2directional LSTM + Conv1D + Conv1D + Dense + Dense
 
 ## URL:	
-[1] : link to Kaggle dataset https://www.kaggle.com/rajyellow46/wine-quality
-[2] : link to git 
+[1] : link to Kaggle dataset https://www.kaggle.com/rajyellow46/wine-quality  
+[2] : link to git https://github.com/ShamanValenok117/CR/tree/master/HW4
 
 
